@@ -1,21 +1,57 @@
-#include <httplib.h>
+#include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/asio.hpp>
 #include <iostream>
 
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace net = boost::asio;
+using tcp = net::ip::tcp;
+namespace ssl = net::ssl;
+
 int main() {
-    httplib::Client cli("https://example.com");
+    try {
+        // I/O and SSL context
+        net::io_context ioc;
+        ssl::context ctx{ssl::context::sslv23_client};
 
-    auto res = cli.Get("/");
+        // Resolve domain
+        tcp::resolver resolver{ioc};
+        auto const results = resolver.resolve("www.example.com", "https");
 
-    if (res) {
-        std::cout << "Status: " << res->status << std::endl;
+        // Create SSL stream
+        beast::ssl_stream<beast::tcp_stream> stream{ioc, ctx};
 
-        if (res->status == 200) {
-            std::cout << "Response body length: " << res->body.length() << " bytes" << std::endl;
-            std::cout << "First 100 characters of response:" << std::endl;
-            std::cout << res->body.substr(0, 100) << "..." << std::endl;
+        // Connect to the resolved endpoint
+        beast::get_lowest_layer(stream).connect(results);
+
+        // Perform SSL handshake
+        stream.handshake(ssl::stream_base::client);
+
+        // Create an HTTP GET request
+        http::request<http::string_body> req{http::verb::get, "/", 11};
+        req.set(http::field::host, "www.example.com");
+        req.set(http::field::user_agent, "Boost.Beast/HelloWorld");
+
+        // Send the request
+        http::write(stream, req);
+
+        // Receive response
+        beast::flat_buffer buffer;
+        http::response<http::dynamic_body> res;
+        http::read(stream, buffer, res);
+
+        // Print response
+        std::cout << res << std::endl;
+
+        // Graceful shutdown
+        beast::error_code ec;
+        stream.shutdown(ec);
+        if (ec && ec != beast::errc::not_connected) {
+            throw beast::system_error{ec};
         }
-    } else {
-        std::cout << "Error: " << httplib::to_string(res.error()) << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 
     return 0;
