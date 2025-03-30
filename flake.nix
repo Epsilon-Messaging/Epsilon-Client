@@ -12,6 +12,8 @@
         clang
         clang-tools
         pkg-config
+        openssl
+        curl
       ];
     };
   };
