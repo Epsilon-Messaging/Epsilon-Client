@@ -68,26 +68,35 @@ using namespace ftxui;
  
 int main() {
   auto screen = ScreenInteractive::Fullscreen();
- 
+
+  int input_height = 5;
+  std::string input_content;
+  auto textarea = Input(&input_content);
+  
+  auto input_component = Renderer(textarea, [&] {
+    return textarea->Render() | flex | border; 
+  });
+  
   auto middle = Renderer([] { return text("middle") | center; });
   auto left = Renderer([] { return text("Left") | center; });
   auto right = Renderer([] { return text("right") | center; });
-  auto top = Renderer([] { return text("top") | center; });
-  auto bottom = Renderer([] { return text("bottom") | center; });
- 
+  auto top = Renderer([] { return text("Epsilon") | center; });
+
   int left_size = 40;
   int right_size = 40;
   int top_size = 1;
-  int bottom_size = 5;
- 
-  auto container = middle;
-  container = ResizableSplitBottom(bottom, container, &bottom_size);
+  
+  auto middle_with_input = Container::Vertical({
+    middle | flex,
+    input_component | size(HEIGHT, EQUAL, input_height)
+  });
+  
+  auto container = middle_with_input;
   container = ResizableSplitLeft(left, container, &left_size);
   container = ResizableSplitRight(right, container, &right_size);
   container = ResizableSplitTop(top, container, &top_size);
- 
-  auto renderer =
-      Renderer(container, [&] { return container->Render() | border; });
- 
+
+  auto renderer = Renderer(container, [&] { return container->Render() | border; });
+
   screen.Loop(renderer);
 }
