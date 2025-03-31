@@ -1,24 +1,39 @@
 {
-  inputs.nixpkgs.url = "github:nixos/nixpkgs";
+  inputs = {
+    # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    systems.url = "github:nix-systems/default";
+  };
 
-  outputs = { self, nixpkgs }:
-  let
-    pkgs = nixpkgs.legacyPackages.x86_64-linux;
+  outputs = { systems, nixpkgs, ... } @ inputs: let
+    eachSystem = f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
   in {
-    devShells.x86_64-linux.default = pkgs.mkShell {
-      buildInputs = with pkgs; [
-        gcc
-        cmake
-        clang
-        clang-tools
-        pkg-config
-        openssl
-        boost
+    devShells = eachSystem (pkgs: {
+      default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          python310Packages.python
+        ];
         
-        # Development tools
-        gdb
-        valgrind
-      ];
-    };
+        shellHook = ''
+          export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
+            pkgs.stdenv.cc.cc
+          ]}
+
+
+          # Create a virtual environment if not already created
+          if [ ! -d ".venv" ]; then
+            python3 -m venv .venv
+          fi
+
+          # Activate the virtual environment
+          source .venv/bin/activate
+
+          # Install non-Nix packages using pip
+          pip install --upgrade pip
+
+          pip3 freeze > requirements.txt
+        '';
+      };
+    });
   };
 }
+
