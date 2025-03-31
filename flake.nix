@@ -29,6 +29,7 @@
 
           # Install non-Nix packages using pip
           pip install --upgrade pip
+          pip install requests
 
           pip3 freeze > requirements.txt
         '';
