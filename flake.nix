@@ -11,6 +11,7 @@
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           python310Packages.python
+          gnupg
         ];
         
         shellHook = ''
@@ -30,6 +31,8 @@
           # Install non-Nix packages using pip
           pip install --upgrade pip
           pip install requests
+          pip install python-gnupg
+
 
           pip3 freeze > requirements.txt
         '';
