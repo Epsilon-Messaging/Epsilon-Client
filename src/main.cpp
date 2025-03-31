@@ -63,40 +63,42 @@
 #include "ftxui/component/component_base.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "ftxui/dom/elements.hpp"
+
+#include "components/MessageInput.hpp"
+#include "components/CenterContent.hpp"
+#include "components/SidebarLeft.hpp"
+#include "components/SidebarRight.hpp"
+#include "components/TitleBar.hpp"
  
 using namespace ftxui;
  
 int main() {
-  auto screen = ScreenInteractive::Fullscreen();
+   auto screen = ScreenInteractive::Fullscreen();
 
-  int input_height = 5;
-  std::string input_content;
-  auto textarea = Input(&input_content);
-  
-  auto input_component = Renderer(textarea, [&] {
-    return textarea->Render() | flex | border; 
-  });
-  
-  auto middle = Renderer([] { return text("middle") | center; });
-  auto left = Renderer([] { return text("Left") | center; });
-  auto right = Renderer([] { return text("right") | center; });
-  auto top = Renderer([] { return text("Epsilon") | center; });
+    std::string input_content;
+    
+    int input_height = 5;
+    auto header_panel = Epsilon::CreateHeaderPanel();
+    auto left_panel = Epsilon::CreateLeftPanel();
+    auto right_panel = Epsilon::CreateRightPanel();
+    auto main_panel = Epsilon::CreateMainPanel();
+    auto input_panel = Epsilon::CreateInputPanel(&input_content);
+    
+    int left_size = 40;
+    int right_size = 40;
+    int top_size = 1;
+    
+    auto main_with_input = Container::Vertical({
+        main_panel | flex,  // Main panel takes all available space
+        input_panel | size(HEIGHT, EQUAL, input_height)  // Input panel has fixed height
+    });
+    
+    auto container = main_with_input;
+    container = ResizableSplitLeft(left_panel, container, &left_size);
+    container = ResizableSplitRight(right_panel, container, &right_size);
+    container = ResizableSplitTop(header_panel, container, &top_size);
 
-  int left_size = 40;
-  int right_size = 40;
-  int top_size = 1;
-  
-  auto middle_with_input = Container::Vertical({
-    middle | flex,
-    input_component | size(HEIGHT, EQUAL, input_height)
-  });
-  
-  auto container = middle_with_input;
-  container = ResizableSplitLeft(left, container, &left_size);
-  container = ResizableSplitRight(right, container, &right_size);
-  container = ResizableSplitTop(top, container, &top_size);
+    auto renderer = Renderer(container, [&] { return container->Render() | border; });
 
-  auto renderer = Renderer(container, [&] { return container->Render() | border; });
-
-  screen.Loop(renderer);
+    screen.Loop(renderer);
 }
