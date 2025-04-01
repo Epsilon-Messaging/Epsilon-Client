@@ -4,13 +4,61 @@
 
 #define RNP_SUCCESS 0
 
+class RNPKeyHandleT {
+  private:
+  rnp_key_handle_t handle = nullptr;
 
-class FFI {
+  public:
+  RNPKeyHandleT() {
+
+  }
+
+  void reset() {
+    handle = nullptr;
+    rnp_key_handle_destroy(handle);
+  }
+
+  rnp_key_handle_t* get_ref() {
+    return &handle;
+  }
+
+  rnp_key_handle_t get() {
+    return handle;
+  }
+
+  ~RNPKeyHandleT() {
+    rnp_key_handle_destroy(handle);
+  }
+};
+
+class RNPOpEncryptT {
+  private:
+  rnp_op_encrypt_t op = nullptr;
+
+  public:
+  RNPOpEncryptT() {
+
+  }
+
+  rnp_op_encrypt_t* get_ref() {
+    return &op;
+  }
+
+  rnp_op_encrypt_t get() {
+    return op;
+  }
+
+  ~RNPOpEncryptT() {
+    rnp_op_encrypt_destroy(op);
+  }
+};
+
+class RNPFFIT {
   private:
   rnp_ffi_t ffi = nullptr;
 
   public:
-  FFI() {
+  RNPFFIT() {
 
   }
 
@@ -22,8 +70,35 @@ class FFI {
     return ffi;
   }
 
-  ~FFI() {
+  ~RNPFFIT() {
     rnp_ffi_destroy(ffi);
+  }
+};
+
+class RNPInputT {
+  private:
+  rnp_input_t input = nullptr;
+
+  public: 
+  RNPInputT() {}
+
+  rnp_input_t get() {
+    return input;
+  }
+
+  rnp_input_t* get_ref() {
+    return &input;
+  }
+
+  void reset() {
+    input = nullptr;
+    rnp_buffer_destroy(input);
+  }
+
+  ~RNPInputT() {
+    if (input) {
+      rnp_buffer_destroy(input);
+    }
   }
 };
 
@@ -144,10 +219,10 @@ namespace rnp {
     static int ffi_generate_keys() {
         RNPOutput keyfile;
         KeyGrip key_grip;
-        FFI ffi;
+        RNPFFIT ffi;
         int result = 1;
 
-        /* initialize FFI object */
+        /* initialize RNPFFIT object */
         if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
             return result;
         }
@@ -204,5 +279,91 @@ namespace rnp {
         result = 0;
         return result;
     }
+
+    static int ffi_encrypt() {
+        RNPFFIT ffi;
+        RNPOpEncryptT encrypt;
+        RNPKeyHandleT key;
+        RNPInputT keyfile;
+        RNPInputT input;
+        RNPOutput output;
+        const char * message = "RNP encryption sample message";
+        int result = 1;
+    
+        /* initialize RNPFFIT object */
+        if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
+            return result;
+        }
+    
+        /* load public keyring - we do not need secret for encryption */
+        if (rnp_input_from_path(keyfile.get_ref(), "pubring.pgp") != RNP_SUCCESS) {
+            fprintf(stdout, "failed to open pubring.pgp. Did you run ./generate sample?\n");
+            return result;
+        }
+    
+        /* we may use RNP_LOAD_SAVE_SECRET_KEYS | RNP_LOAD_SAVE_PUBLIC_KEYS as well */
+        if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_PUBLIC_KEYS) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to read pubring.pgp\n");
+            return result;
+        }
+        keyfile.reset();
+    
+        /* create memory input and file output objects for the message and encrypted message */
+        if (rnp_input_from_memory(input.get_ref(), (uint8_t *) message, strlen(message), false) !=
+            RNP_SUCCESS) {
+            fprintf(stdout, "failed to create input object\n");
+            return result;
+        }
+    
+        if (rnp_output_to_path(output.get_ref(), "encrypted.asc") != RNP_SUCCESS) {
+            fprintf(stdout, "failed to create output object\n");
+            return result;
+        }
+    
+        /* create encryption operation */
+        if (rnp_op_encrypt_create(encrypt.get_ref(), ffi.get(), input.get(), output.get()) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to create encrypt operation\n");
+            return result;
+        }
+    
+        /* setup encryption parameters */
+        rnp_op_encrypt_set_armor(encrypt.get(), true);
+        rnp_op_encrypt_set_file_name(encrypt.get(), "message.txt");
+        rnp_op_encrypt_set_file_mtime(encrypt.get(), (uint32_t) time(NULL));
+        rnp_op_encrypt_set_compression(encrypt.get(), "ZIP", 6);
+        rnp_op_encrypt_set_cipher(encrypt.get(), RNP_ALGNAME_AES_256);
+        rnp_op_encrypt_set_aead(encrypt.get(), "None");
+    
+        /* locate recipient's key and add it to the operation context. While we search by userid
+         * (which is easier), you can search by keyid, fingerprint or grip. */
+        if (rnp_locate_key(ffi.get(), "userid", "rsa@key", key.get_ref()) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to locate recipient key rsa@key.\n");
+            return result;
+        }
+    
+        if (rnp_op_encrypt_add_recipient(encrypt.get(), key.get()) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to add recipient\n");
+            return result;
+        }
+        key.reset();
+    
+        /* add encryption password as well */
+        if (rnp_op_encrypt_add_password(
+              encrypt.get(), "encpassword", RNP_ALGNAME_SHA256, 0, RNP_ALGNAME_AES_256) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to add encryption password\n");
+            return result;
+        }
+    
+        /* execute encryption operation */
+        if (rnp_op_encrypt_execute(encrypt.get()) != RNP_SUCCESS) {
+            fprintf(stdout, "encryption failed\n");
+            return result;
+        }
+    
+        fprintf(stdout, "Encryption succeeded. Encrypted message written to file encrypted.asc\n");
+        result = 0;
+        return result;
+    }
+
   };
 };
