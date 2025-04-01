@@ -47,7 +47,7 @@ namespace Epsilon {
                 auto sender_name = ftxui::text(message.sender_name) | 
                     (message.sender_name == messages[0].sender_name ? 
                      ftxui::color(ftxui::Color::Green) : ftxui::color(ftxui::Color::Blue));
-                auto message_content = ftxui::text(message.message) | ftxui::color(ftxui::Color::White);
+                auto message_content = ftxui::text(message.content) | ftxui::color(ftxui::Color::White);
 
                 auto combined_message = ftxui::hbox({
                     date,

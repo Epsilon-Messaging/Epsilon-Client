@@ -6,27 +6,22 @@ namespace Epsilon {
     private:
         std::string title;
         int width;
-        std::vector<std::string> usernames;
+        std::vector<std::string> conversations;
         int selected_index = 0;
 
     public:
-        LeftPanel() : title("Direct Messages"), width(30), usernames({
-            "User1",
-            "User2",
-            "User3",
-            "User4",
-            "User5",
-            "User6",
-            "User7",
-            "User8"
+        LeftPanel() : title("Conversations"), width(30), conversations({
+            "Peaches_MLG",
+            "Cool People",
+            "Secret Group",
         }) {}
 
         ftxui::Component Create() {
-            auto user_list = ftxui::Menu(&usernames, &selected_index);
+            auto conversation_list = ftxui::Menu(&conversations, &selected_index);
 
             return ftxui::Container::Vertical({
-                ftxui::Renderer([] { return ftxui::text("Direct Messages") | ftxui::center | ftxui::bold; }),
-                user_list
+                ftxui::Renderer([] { return ftxui::text("Converations") | ftxui::center | ftxui::bold; }),
+                conversation_list
             }) | ftxui::yflex_shrink;
         }
 
