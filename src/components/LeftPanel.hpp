@@ -27,7 +27,7 @@ namespace Epsilon {
             return ftxui::Container::Vertical({
                 ftxui::Renderer([] { return ftxui::text("Direct Messages") | ftxui::center | ftxui::bold; }),
                 user_list
-            }) | ftxui::yflex_shrink | ftxui::border;
+            }) | ftxui::yflex_shrink;
         }
 
         int GetWidth() const { return width; }

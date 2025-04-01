@@ -33,7 +33,7 @@ namespace Epsilon {
                 return ftxui::vbox({
                     ftxui::text("Logs") | ftxui::center | ftxui::bold,
                     log_list
-                }) | ftxui::border;
+                });
             });
         }
 

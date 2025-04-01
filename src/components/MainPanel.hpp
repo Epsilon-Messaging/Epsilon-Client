@@ -83,7 +83,7 @@ namespace Epsilon {
                 return ftxui::vbox({
                     message_component->Render() | ftxui::flex,
                     input_component->Render() | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, 3)
-                }) | ftxui::border;
+                });
             });
         }
 
