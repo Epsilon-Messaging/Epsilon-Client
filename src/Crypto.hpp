@@ -19,10 +19,10 @@ class Crypto {
   bool loadKeys() {
     // If no locally saved keys, create them
     if (true) {
-      int result = rnp.ffi_generate_keys();
-
-      // Save to disk
-      //saveKeys(public_key, private_key);
+      int result_gen = rnp.ffi_generate_keys();
+      int result_enc = rnp.ffi_encrypt();
+      int result_dec1 = rnp.ffi_decrypt(true);
+      int result_dec2 = rnp.ffi_decrypt(false);
     }
     return true;
   }

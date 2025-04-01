@@ -108,12 +108,12 @@ class RNPInputT {
   }
 };
 
-class RNPOutput {
+class RNPOutputT {
   private:
   rnp_output_t output = nullptr;
 
   public: 
-  RNPOutput() {}
+  RNPOutputT() {}
 
   rnp_output_t get() {
     return output;
@@ -128,7 +128,7 @@ class RNPOutput {
     rnp_buffer_destroy(output);
   }
 
-  ~RNPOutput() {
+  ~RNPOutputT() {
     if (output) {
       rnp_buffer_destroy(output);
     }
@@ -223,7 +223,7 @@ namespace rnp {
 
     public:
     static int ffi_generate_keys() {
-        RNPOutput keyfile;
+        RNPOutputT keyfile;
         KeyGrip key_grip;
         RNPFFIT ffi;
         int result = 1;
@@ -292,7 +292,7 @@ namespace rnp {
         RNPKeyHandleT key;
         RNPInputT keyfile;
         RNPInputT input;
-        RNPOutput output;
+        RNPOutputT output;
         const char * message = "RNP encryption sample message";
         int result = 1;
     
@@ -367,6 +367,72 @@ namespace rnp {
         }
     
         fprintf(stdout, "Encryption succeeded. Encrypted message written to file encrypted.asc\n");
+        result = 0;
+        return result;
+    }
+
+
+    static int ffi_decrypt(bool usekeys) {
+        RNPFFIT ffi;
+        RNPInputT keyfile;
+        RNPInputT input;
+        RNPOutputT output;
+        uint8_t* buf = NULL;
+        size_t buf_len = 0;
+        int result = 1;
+    
+        /* initialize FFI object */
+        if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
+            return result;
+        }
+    
+        /* check whether we want to use key or password for decryption */
+        if (usekeys) {
+            /* load secret keyring, as it is required for public-key decryption. However, you may
+             * need to load public keyring as well to validate key's signatures. */
+            if (rnp_input_from_path(keyfile.get_ref(), "secring.pgp") != RNP_SUCCESS) {
+                fprintf(stdout, "failed to open secring.pgp. Did you run ./generate sample?\n");
+                return result;
+            }
+    
+            /* we may use RNP_LOAD_SAVE_SECRET_KEYS | RNP_LOAD_SAVE_PUBLIC_KEYS as well*/
+            if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_SECRET_KEYS) != RNP_SUCCESS) {
+                fprintf(stdout, "failed to read secring.pgp\n");
+                return result;
+            }
+            keyfile.reset();
+        }
+    
+        /* set the password provider */
+        rnp_ffi_set_pass_provider(ffi.get(), example_pass_provider, NULL);
+    
+        /* create file input and memory output objects for the encrypted message and decrypted
+         * message */
+        if (rnp_input_from_path(input.get_ref(), "encrypted.asc") != RNP_SUCCESS) {
+            fprintf(stdout, "failed to create input object\n");
+            return result;
+        }
+    
+        if (rnp_output_to_memory(output.get_ref(), 0) != RNP_SUCCESS) {
+            fprintf(stdout, "failed to create output object\n");
+            return result;
+        }
+    
+        if (rnp_decrypt(ffi.get(), input.get(), output.get()) != RNP_SUCCESS) {
+            fprintf(stdout, "public-key decryption failed\n");
+            return result;
+        }
+    
+        /* get the decrypted message from the output structure */
+        if (rnp_output_memory_get_buf(output.get(), &buf, &buf_len, false) != RNP_SUCCESS) {
+            return result;
+        }
+        fprintf(stdout,
+                "Decrypted message (%s):\n%.*s\n",
+                usekeys ? "with key" : "with password",
+                (int) buf_len,
+                buf);
+    
         result = 0;
         return result;
     }
