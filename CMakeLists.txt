@@ -10,12 +10,8 @@ find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
-# Use gpgme-config to get the CFLAGS and LIBS for GPGME
-execute_process(
-    COMMAND gpgme-config --cflags --libs
-    OUTPUT_VARIABLE GPGME_FLAGS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# Find RNP
+find_package(RNP REQUIRED)
 
 # Add FTXUI
 include(FetchContent)
@@ -35,7 +31,7 @@ endif()
 add_executable(epsilon src/main.cpp)
 
 # Include directories and link libraries
-target_compile_options(epsilon PRIVATE ${GPGME_FLAGS})
+include_directories(${RNP_INCLUDES})
 target_link_libraries(epsilon
     Boost::program_options
     OpenSSL::SSL
@@ -43,5 +39,16 @@ target_link_libraries(epsilon
     ftxui::screen
     ftxui::dom
     ftxui::component
+    rnp
 )
 
+# Enable all warnings and treat them as errors
+#target_compile_options(epsilon PRIVATE 
+#    -Wall
+#    -Wextra
+#    -pedantic
+#    -Werror
+#)
+
+# Enforce the use of modern C++ features (C++20)
+#target_compile_features(epsilon PRIVATE cxx_std_20)

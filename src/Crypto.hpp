@@ -1,21 +1,28 @@
-#include <gpgme.h>
 #include <string>
+#include "RNPWrapper.hpp"
 
 class Crypto {
   public:
     std::string public_key;
     std::string private_key;
+    rnp::RNPWrapper rnp;
+
 
   Crypto() {
+
+  }
+
+  int generate_keys() {
 
   }
 
   bool loadKeys() {
     // If no locally saved keys, create them
     if (true) {
+      int result = rnp.ffi_generate_keys();
 
       // Save to disk
-      saveKeys(public_key, private_key);
+      //saveKeys(public_key, private_key);
     }
     return true;
   }

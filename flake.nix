@@ -14,7 +14,7 @@
         pkg-config
         openssl
         boost
-        gpgme
+        rnp
         
         # Development tools
         gdb
