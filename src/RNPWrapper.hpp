@@ -212,13 +212,23 @@ const char *CURVE_25519_KEY_DESC = "{\
 
 namespace rnp {
   class RNPWrapper {
-    static bool example_pass_provider(rnp_ffi_t ffi, void* app_ctx, rnp_key_handle_t key, const char* pgp_context, char buf[], size_t buf_len) {
-        if (strcmp(pgp_context, "protect")) {
-            return false;
+    static bool example_pass_provider(rnp_ffi_t        ffi,
+                          void *           app_ctx,
+                          rnp_key_handle_t key,
+                          const char *     pgp_context,
+                          char             buf[],
+                          size_t           buf_len)
+    {
+        if (!strcmp(pgp_context, "decrypt (symmetric)")) {
+            strncpy(buf, "encpassword", buf_len);
+            return true;
+        }
+        if (!strcmp(pgp_context, "decrypt")) {
+            strncpy(buf, "password", buf_len);
+            return true;
         }
     
-        strncpy(buf, "password", buf_len);
-        return true;
+        return false;
     }
 
     public:
