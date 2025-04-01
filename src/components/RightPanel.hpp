@@ -12,7 +12,7 @@ namespace Epsilon {
         int selected_index = 0;
 
     public:
-        RightPanel() : title("Direct Messages"), width(30), logs({
+        RightPanel() : title("Logs"), width(30), logs({
             "[INFO] Connecting to server...",
             "[INFO] Successfully connected to server.",
             "[INFO] Encrypting message 719047",
