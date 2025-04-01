@@ -27,7 +27,9 @@ class RNPKeyHandleT {
   }
 
   ~RNPKeyHandleT() {
-    rnp_key_handle_destroy(handle);
+    if (handle) {
+      rnp_key_handle_destroy(handle);
+    }
   }
 };
 
@@ -49,7 +51,9 @@ class RNPOpEncryptT {
   }
 
   ~RNPOpEncryptT() {
-    rnp_op_encrypt_destroy(op);
+    if (op) {
+      rnp_op_encrypt_destroy(op);
+    }
   }
 };
 
@@ -71,7 +75,9 @@ class RNPFFIT {
   }
 
   ~RNPFFIT() {
-    rnp_ffi_destroy(ffi);
+    if (ffi) {
+      rnp_ffi_destroy(ffi);
+    }
   }
 };
 
