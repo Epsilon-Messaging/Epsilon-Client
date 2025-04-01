@@ -11,6 +11,7 @@
 #include "components/InputPanel.hpp"
 #include "GroupMessage.hpp"
 #include "DirectMessage.hpp"
+#include "Crypto.hpp"
 
 namespace Epsilon {
     class EpsilonApp {
@@ -26,6 +27,9 @@ namespace Epsilon {
 
     public:
         EpsilonApp() : screen(ftxui::ScreenInteractive::Fullscreen()) {
+            Crypto crypto = Crypto();
+            crypto.loadKeys();
+            
             User tiqur = {"Tiqur", "publickey", 1};
             User peaches = {"Peaches_MLG", "publickey", 2};
             User alice = {"Alice", "publickey", 3};

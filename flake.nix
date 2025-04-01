@@ -14,6 +14,7 @@
         pkg-config
         openssl
         boost
+        gpgme
         
         # Development tools
         gdb

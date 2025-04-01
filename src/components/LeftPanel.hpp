@@ -14,7 +14,8 @@ namespace Epsilon {
             "Peaches_MLG",
             "Cool People",
             "Secret Group",
-        }) {}
+            }) {
+        }
 
         ftxui::Component Create() {
             auto conversation_list = ftxui::Menu(&conversations, &selected_index);
