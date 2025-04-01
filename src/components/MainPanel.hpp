@@ -2,37 +2,70 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
+auto timestamp_to_string(unsigned int timestamp) {
+    std::chrono::seconds sec(timestamp);
+    std::chrono::system_clock::time_point tp(sec);
+    
+    std::time_t time = std::chrono::system_clock::to_time_t(tp);
+    std::tm tm = *std::localtime(&time);
+
+    std::stringstream ss;
+    ss << "[" << std::put_time(&tm, "%m/%d/%y %H:%M") << "]";
+    return ss.str();
+}
+
+
+struct Message {
+  unsigned int timestamp;
+  std::string sender_name;
+  std::string message;
+};
+
 namespace Epsilon {
     class MainPanel {
     private:
         std::string title;
         int width;
-        std::vector<std::string> logs;
+        std::vector<Message> messages;
         int selected_index = 0;
 
     public:
-        MainPanel() : title("Messages"), width(30), logs({
-            "[03/28/2025 17:24] Tiqur: Hello",
-            "[03/28/2025 17:25] Peaches_MLG: Hi",
-            "[03/28/2025 17:25] Tiqur: Check this out https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            "[03/28/2025 17:26] Peaches_MLG: >:C",
+        MainPanel() : title("Messages"), width(30), messages({
+            { 1743480424, "Tiqur", "Hello"},
+            { 1743480429, "Peaches_MLG", "Hi"},
+            { 1743480434, "Tiqur", "Check this out https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+            { 1743480437, "Peaches_MLG", "Ok"},
+            { 1743480443, "Peaches_MLG", ">:C"},
         }) {}
 
         ftxui::Component Create() {
-            std::vector<ftxui::Element> log_elements;
-            for (const auto& log : logs) {
-                log_elements.push_back(ftxui::paragraph(log));
+            std::vector<ftxui::Element> message_elements;
+            for (const auto& message : messages) {
+                auto date = ftxui::text(timestamp_to_string(message.timestamp)) | ftxui::color(ftxui::Color::GrayDark);
+                auto sender_name = ftxui::text(message.sender_name) | (message.sender_name == messages[0].sender_name ? ftxui::color(ftxui::Color::Green) : ftxui::color(ftxui::Color::Blue));
+                auto message_content = ftxui::text(message.message) | ftxui::color(ftxui::Color::White);
+        
+                auto combined_message = ftxui::hbox({
+                    date,
+                    ftxui::text(" "),
+                    sender_name,
+                    ftxui::text(": "),
+                    message_content
+                });
+        
+                message_elements.push_back(combined_message);
             }
-
-            auto log_list = ftxui::vbox(log_elements);
-
-            return ftxui::Renderer([log_list] {
+        
+            auto message_list = ftxui::vbox(message_elements);
+        
+            return ftxui::Renderer([message_list] {
                 return ftxui::vbox({
                     ftxui::text("Messages") | ftxui::center | ftxui::bold,
-                    log_list
+                    message_list
                 }) | ftxui::border;
             });
         }
+
 
         int GetWidth() const { return width; }
     };
