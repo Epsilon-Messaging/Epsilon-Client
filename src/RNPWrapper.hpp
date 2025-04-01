@@ -4,13 +4,13 @@
 
 #define RNP_SUCCESS 0
 
-/* RSA key JSON description. 31536000 = 1 year expiration, 15768000 = half year */
+/* RSA key JSON description */
 const char *RSA_KEY_DESC = "{\
     'primary': {\
         'type': 'RSA',\
         'length': 2048,\
         'userid': 'rsa@key',\
-        'expiration': 31536000,\
+        'expiration': 0,\
         'usage': ['sign'],\
         'protection': {\
             'cipher': 'AES256',\
@@ -20,7 +20,7 @@ const char *RSA_KEY_DESC = "{\
     'sub': {\
         'type': 'RSA',\
         'length': 2048,\
-        'expiration': 15768000,\
+        'expiration': 0,\
         'usage': ['encrypt'],\
         'protection': {\
             'cipher': 'AES256',\
@@ -43,7 +43,7 @@ const char *CURVE_25519_KEY_DESC = "{\
     'sub': {\
         'type': 'ECDH',\
         'curve': 'Curve25519',\
-        'expiration': 15768000,\
+        'expiration': 0,\
         'usage': ['encrypt'],\
         'protection': {\
             'cipher': 'AES256',\
