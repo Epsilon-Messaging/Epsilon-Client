@@ -1,6 +1,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include "InputPanel.hpp"
+#include "../Message.hpp"
 
 auto timestamp_to_string(unsigned int timestamp) {
     std::chrono::seconds sec(timestamp);
@@ -13,12 +14,6 @@ auto timestamp_to_string(unsigned int timestamp) {
     ss << "[" << std::put_time(&tm, "%m/%d/%y %H:%M") << "]";
     return ss.str();
 }
-
-struct Message {
-    unsigned int timestamp;
-    std::string sender_name;
-    std::string message;
-};
 
 namespace Epsilon {
     class MainPanel {

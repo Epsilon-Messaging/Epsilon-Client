@@ -7,6 +7,7 @@
 #include "components/RightPanel.hpp"
 #include "components/MainPanel.hpp"
 #include "components/InputPanel.hpp"
+#include "Conversation.hpp"
 
 namespace Epsilon {
     class EpsilonApp {
@@ -16,6 +17,7 @@ namespace Epsilon {
         RightPanel right_panel;
         MainPanel main_panel;
         ftxui::ScreenInteractive screen;
+        std::vector<Conversation> conversations;
         
     public:
         EpsilonApp() 
