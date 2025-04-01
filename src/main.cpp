@@ -1,8 +1,16 @@
-#include <boost/beast.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/asio.hpp>
-#include <iostream>
+#include "EpsilonApp.hpp"
 
+int main() {
+    Epsilon::EpsilonApp app;
+    app.Run();
+    return 0;
+}
+
+//#include <boost/beast.hpp>
+//#include <boost/beast/ssl.hpp>
+//#include <boost/asio.hpp>
+//#include <iostream>
+//
 //namespace beast = boost::beast;
 //namespace http = beast::http;
 //namespace net = boost::asio;
@@ -57,48 +65,3 @@
 //    return 0;
 //}
 //
-#include <memory>
-#include "ftxui/component/captured_mouse.hpp"
-#include "ftxui/component/component.hpp"
-#include "ftxui/component/component_base.hpp"
-#include "ftxui/component/screen_interactive.hpp"
-#include "ftxui/dom/elements.hpp"
-
-#include "components/MessageInput.hpp"
-#include "components/CenterContent.hpp"
-#include "components/SidebarLeft.hpp"
-#include "components/SidebarRight.hpp"
-#include "components/TitleBar.hpp"
- 
-using namespace ftxui;
- 
-int main() {
-   auto screen = ScreenInteractive::Fullscreen();
-
-    std::string input_content;
-    
-    int input_height = 5;
-    auto header_panel = Epsilon::CreateHeaderPanel();
-    auto left_panel = Epsilon::CreateLeftPanel();
-    auto right_panel = Epsilon::CreateRightPanel();
-    auto main_panel = Epsilon::CreateMainPanel();
-    auto input_panel = Epsilon::CreateInputPanel(&input_content);
-    
-    int left_size = 40;
-    int right_size = 40;
-    int top_size = 1;
-    
-    auto main_with_input = Container::Vertical({
-        main_panel | flex,  // Main panel takes all available space
-        input_panel | size(HEIGHT, EQUAL, input_height)  // Input panel has fixed height
-    });
-    
-    auto container = main_with_input;
-    container = ResizableSplitLeft(left_panel, container, &left_size);
-    container = ResizableSplitRight(right_panel, container, &right_size);
-    container = ResizableSplitTop(header_panel, container, &top_size);
-
-    auto renderer = Renderer(container, [&] { return container->Render() | border; });
-
-    screen.Loop(renderer);
-}
