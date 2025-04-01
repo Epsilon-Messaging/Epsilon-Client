@@ -6,6 +6,9 @@ int main() {
     return 0;
 }
 
+// TODO: Help menu (press h for keybinds)
+
+
 //#include <boost/beast.hpp>
 //#include <boost/beast/ssl.hpp>
 //#include <boost/asio.hpp>
