@@ -219,13 +219,16 @@ namespace rnp {
                           char             buf[],
                           size_t           buf_len)
     {
-        if (!strcmp(pgp_context, "decrypt (symmetric)")) {
+        if (strcmp(pgp_context, "decrypt (symmetric)")) {
+            strncpy(buf, "password", buf_len);
+            return true;
+        }
+        if (strcmp(pgp_context, "decrypt")) {
             strncpy(buf, "encpassword", buf_len);
             return true;
         }
-        if (!strcmp(pgp_context, "decrypt")) {
-            strncpy(buf, "password", buf_len);
-            return true;
+        if (strcmp(pgp_context, "protect")) {
+            return false;
         }
     
         return false;
@@ -346,7 +349,7 @@ namespace rnp {
         rnp_op_encrypt_set_armor(encrypt.get(), true);
         rnp_op_encrypt_set_file_name(encrypt.get(), "message.txt");
         rnp_op_encrypt_set_file_mtime(encrypt.get(), (uint32_t) time(NULL));
-        rnp_op_encrypt_set_compression(encrypt.get(), "ZIP", 6);
+        //rnp_op_encrypt_set_compression(encrypt.get(), "ZIP", 6);
         rnp_op_encrypt_set_cipher(encrypt.get(), RNP_ALGNAME_AES_256);
         rnp_op_encrypt_set_aead(encrypt.get(), "None");
     
