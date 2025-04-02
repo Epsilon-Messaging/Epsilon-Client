@@ -26,28 +26,18 @@ public:
             const char* test_message = "Test encryption message";
             std::cout << "Original message: " << test_message << std::endl;
             
-            std::string encrypted = rnp.ffi_encrypt_string(test_message);
+            std::string encrypted = rnp.ffi_encrypt_string(test_message, "rsa@key");
             std::cout << "Encrypted message length: " << encrypted.length() << std::endl;
             
             if (!encrypted.empty()) {
                 // Test decryption with key
-                std::string decrypted1 = rnp.ffi_decrypt_string(encrypted, true);
-                std::cout << "Decryption with key result: " << decrypted1 << std::endl;
+                std::string decrypted = rnp.ffi_decrypt_string(encrypted);
+                std::cout << "Decryption result: " << decrypted << std::endl;
                 
-                // Test decryption with password
-                std::string decrypted2 = rnp.ffi_decrypt_string(encrypted, false);
-                std::cout << "Decryption with password result: " << decrypted2 << std::endl;
-                
-                if (decrypted1 == test_message) {
+                if (decrypted == test_message) {
                     std::cout << "Key-based decryption successful" << std::endl;
                 } else {
                     std::cout << "Key-based decryption failed" << std::endl;
-                }
-                
-                if (decrypted2 == test_message) {
-                    std::cout << "Password-based decryption successful" << std::endl;
-                } else {
-                    std::cout << "Password-based decryption failed" << std::endl;
                 }
             } else {
                 std::cout << "Encryption failed" << std::endl;
@@ -68,8 +58,8 @@ public:
 
     std::string encryptMessage(std::string message, std::string recipient_public_key) {
         // Encrypt using recipient's public key
-        std::cout << "Encrypting message: " << message << std::endl;
-        std::string encrypted = rnp.ffi_encrypt_string(message.c_str());
+        std::cout << "Encrypting message for recipient: " << recipient_public_key << std::endl;
+        std::string encrypted = rnp.ffi_encrypt_string(message.c_str(), recipient_public_key);
         std::cout << "Encryption completed, result length: " << encrypted.length() << std::endl;
         return encrypted;
     }
@@ -77,7 +67,7 @@ public:
     std::string decryptMessage(std::string encrypted_message) {
         // Decrypt using own private key
         std::cout << "Decrypting message of length: " << encrypted_message.length() << std::endl;
-        std::string decrypted = rnp.ffi_decrypt_string(encrypted_message, true);
+        std::string decrypted = rnp.ffi_decrypt_string(encrypted_message);
         std::cout << "Decryption completed, result: " << decrypted << std::endl;
         return decrypted;
     }
