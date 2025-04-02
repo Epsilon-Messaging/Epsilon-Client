@@ -22,11 +22,19 @@ public:
             int result_gen = rnp.ffi_generate_keys();
             std::cout << "Key generation result: " << result_gen << std::endl;
             
+            // Extract and log the public and private keys
+            public_key = rnp.ffi_export_public_key("rsa@key");
+            private_key = rnp.ffi_export_private_key("rsa@key");
+            
+            std::cout << "Public key:" << std::endl << public_key << std::endl;
+            std::cout << "Private key:" << std::endl << private_key << std::endl;
+            
             // Test encryption
             const char* test_message = "Test encryption message";
             std::cout << "Original message: " << test_message << std::endl;
             
             std::string encrypted = rnp.ffi_encrypt_string(test_message, "rsa@key");
+            std::cout << "Encrypted message: " << std::endl << encrypted << std::endl;
             std::cout << "Encrypted message length: " << encrypted.length() << std::endl;
             
             if (!encrypted.empty()) {
@@ -43,11 +51,17 @@ public:
                 std::cout << "Encryption failed" << std::endl;
                 return false;
             }
+            
+            // Save the keys for future use
+            saveKeys(public_key, private_key);
         }
         return true;
     }
 
     bool saveKeys(std::string public_key, std::string private_key) {
+        // Store the keys (this is currently a stub)
+        this->public_key = public_key;
+        this->private_key = private_key;
         return true;
     }
 

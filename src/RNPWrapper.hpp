@@ -411,5 +411,122 @@ namespace rnp {
         
         return result_str;
     }
+
+    static std::string ffi_export_public_key(const std::string& userid) {
+        RNPFFIT ffi;
+        RNPKeyHandleT key;
+        RNPOutputT output;
+        std::string result_str = "";
+        
+        if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
+            std::cout << "Failed to create FFI" << std::endl;
+            return result_str;
+        }
+        
+        // Load the public keyring
+        RNPInputT keyfile;
+        if (rnp_input_from_path(keyfile.get_ref(), "pubring.pgp") != RNP_SUCCESS) {
+            std::cout << "Failed to open pubring.pgp" << std::endl;
+            return result_str;
+        }
+        
+        if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_PUBLIC_KEYS) != RNP_SUCCESS) {
+            std::cout << "Failed to read pubring.pgp" << std::endl;
+            return result_str;
+        }
+        keyfile.reset();
+        
+        // Locate the key by userid
+        if (rnp_locate_key(ffi.get(), "userid", userid.c_str(), key.get_ref()) != RNP_SUCCESS) {
+            std::cout << "Failed to locate key with userid: " << userid << std::endl;
+            return result_str;
+        }
+        
+        // Create output memory buffer
+        if (rnp_output_to_memory(output.get_ref(), 0) != RNP_SUCCESS) {
+            std::cout << "Failed to create output buffer" << std::endl;
+            return result_str;
+        }
+        
+        // Export the public key in ASCII armor format
+        if (rnp_key_export(key.get(), output.get(), RNP_KEY_EXPORT_PUBLIC | RNP_KEY_EXPORT_ARMORED) != RNP_SUCCESS) {
+            std::cout << "Failed to export public key" << std::endl;
+            return result_str;
+        }
+        
+        // Get exported key
+        uint8_t* key_buf = nullptr;
+        size_t key_len = 0;
+        
+        if (rnp_output_memory_get_buf(output.get(), &key_buf, &key_len, false) != RNP_SUCCESS) {
+            std::cout << "Failed to get exported key data" << std::endl;
+            return result_str;
+        }
+        
+        result_str = std::string(reinterpret_cast<char*>(key_buf), key_len);
+        rnp_buffer_destroy(key_buf);
+        
+        return result_str;
+    }
+    
+    static std::string ffi_export_private_key(const std::string& userid) {
+        RNPFFIT ffi;
+        RNPKeyHandleT key;
+        RNPOutputT output;
+        std::string result_str = "";
+        
+        if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
+            std::cout << "Failed to create FFI" << std::endl;
+            return result_str;
+        }
+        
+        // Set password provider for key export
+        rnp_ffi_set_pass_provider(ffi.get(), example_pass_provider, NULL);
+        
+        // Load the secret keyring
+        RNPInputT keyfile;
+        if (rnp_input_from_path(keyfile.get_ref(), "secring.pgp") != RNP_SUCCESS) {
+            std::cout << "Failed to open secring.pgp" << std::endl;
+            return result_str;
+        }
+        
+        if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_SECRET_KEYS) != RNP_SUCCESS) {
+            std::cout << "Failed to read secring.pgp" << std::endl;
+            return result_str;
+        }
+        keyfile.reset();
+        
+        // Locate the key by userid
+        if (rnp_locate_key(ffi.get(), "userid", userid.c_str(), key.get_ref()) != RNP_SUCCESS) {
+            std::cout << "Failed to locate key with userid: " << userid << std::endl;
+            return result_str;
+        }
+        
+        // Create output memory buffer
+        if (rnp_output_to_memory(output.get_ref(), 0) != RNP_SUCCESS) {
+            std::cout << "Failed to create output buffer" << std::endl;
+            return result_str;
+        }
+        
+        // Export the private key in ASCII armor format
+        if (rnp_key_export(key.get(), output.get(), RNP_KEY_EXPORT_SECRET | RNP_KEY_EXPORT_ARMORED) != RNP_SUCCESS) {
+            std::cout << "Failed to export private key" << std::endl;
+            return result_str;
+        }
+        
+        // Get exported key
+        uint8_t* key_buf = nullptr;
+        size_t key_len = 0;
+        
+        if (rnp_output_memory_get_buf(output.get(), &key_buf, &key_len, false) != RNP_SUCCESS) {
+            std::cout << "Failed to get exported key data" << std::endl;
+            return result_str;
+        }
+        
+        result_str = std::string(reinterpret_cast<char*>(key_buf), key_len);
+        rnp_buffer_destroy(key_buf);
+        
+        return result_str;
+    }
   };
 };
