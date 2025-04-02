@@ -1,5 +1,6 @@
 #pragma once
 #include <string.h>
+#include <iostream>
 #include <rnp/rnp.h>
 
 #define RNP_SUCCESS 0
@@ -243,41 +244,43 @@ namespace rnp {
 
         /* initialize RNPFFIT object */
         if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
+            std::cout << "Failed to create FFI" << std::endl;
             return result;
         }
 
         /* set password provider */
         if (rnp_ffi_set_pass_provider(ffi.get(), example_pass_provider, NULL)) {
+            std::cout << "Failed to set password provider" << std::endl;
             return result;
         }
 
         /* generate EDDSA/X25519 keypair */
         if (rnp_generate_key_json(ffi.get(), CURVE_25519_KEY_DESC, key_grip.get_ref()) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to generate eddsa key\n");
+            std::cout << "Failed to generate EDDSA key" << std::endl;
             return result;
         }
 
-        fprintf(stdout, "Generated 25519 key/subkey:\n%s\n", key_grip.get());
+        std::cout << "Generated 25519 key/subkey: " << key_grip.get() << std::endl;
         key_grip.reset();
 
         /* generate RSA keypair */
         if (rnp_generate_key_json(ffi.get(), RSA_KEY_DESC, key_grip.get_ref()) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to generate rsa key\n");
+            std::cout << "Failed to generate RSA key" << std::endl;
             return result;
         }
 
-        fprintf(stdout, "Generated RSA key/subkey:\n%s\n", key_grip.get());
+        std::cout << "Generated RSA key/subkey: " << key_grip.get() << std::endl;
         key_grip.reset();
 
         /* create file output object and save public keyring with generated keys, overwriting
          * previous file if any. You may use rnp_output_to_memory() here as well. */
         if (rnp_output_to_path(keyfile.get_ref(), "pubring.pgp") != RNP_SUCCESS) {
-            fprintf(stdout, "failed to initialize pubring.pgp writing\n");
+            std::cout << "Failed to initialize pubring.pgp writing" << std::endl;
             return result;
         }
 
         if (rnp_save_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_PUBLIC_KEYS) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to save pubring\n");
+            std::cout << "Failed to save pubring" << std::endl;
             return result;
         }
 
@@ -285,170 +288,171 @@ namespace rnp {
 
         /* create file output object and save secret keyring with generated keys */
         if (rnp_output_to_path(keyfile.get_ref(), "secring.pgp") != RNP_SUCCESS) {
-            fprintf(stdout, "failed to initialize secring.pgp writing\n");
+            std::cout << "Failed to initialize secring.pgp writing" << std::endl;
             return result;
         }
 
         if (rnp_save_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_SECRET_KEYS) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to save secring\n");
+            std::cout << "Failed to save secring" << std::endl;
             return result;
         }
 
         keyfile.reset();
         result = 0;
+        std::cout << "Key generation completed successfully" << std::endl;
         return result;
     }
 
-    static int ffi_encrypt() {
+    static std::string ffi_encrypt_string(const char* message) {
         RNPFFIT ffi;
         RNPOpEncryptT encrypt;
         RNPKeyHandleT key;
         RNPInputT keyfile;
         RNPInputT input;
         RNPOutputT output;
-        const char * message = "RNP encryption sample message";
-        int result = 1;
+        std::string result_str = "";
+        
+        std::cout << "Starting encryption of message" << std::endl;
     
-        /* initialize RNPFFIT object */
         if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
-            return result;
+            std::cout << "Failed to create FFI" << std::endl;
+            return result_str;
         }
     
-        /* load public keyring - we do not need secret for encryption */
         if (rnp_input_from_path(keyfile.get_ref(), "pubring.pgp") != RNP_SUCCESS) {
-            fprintf(stdout, "failed to open pubring.pgp. Did you run ./generate sample?\n");
-            return result;
+            std::cout << "Failed to open pubring.pgp. Did you run key generation?" << std::endl;
+            return result_str;
         }
     
-        /* we may use RNP_LOAD_SAVE_SECRET_KEYS | RNP_LOAD_SAVE_PUBLIC_KEYS as well */
         if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_PUBLIC_KEYS) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to read pubring.pgp\n");
-            return result;
+            std::cout << "Failed to read pubring.pgp" << std::endl;
+            return result_str;
         }
         keyfile.reset();
+        std::cout << "Public keys loaded successfully" << std::endl;
     
-        /* create memory input and file output objects for the message and encrypted message */
-        if (rnp_input_from_memory(input.get_ref(), (uint8_t *) message, strlen(message), false) !=
-            RNP_SUCCESS) {
-            fprintf(stdout, "failed to create input object\n");
-            return result;
+        if (rnp_input_from_memory(input.get_ref(), (uint8_t *) message, strlen(message), false) != RNP_SUCCESS) {
+            std::cout << "Failed to create input object" << std::endl;
+            return result_str;
         }
     
-        if (rnp_output_to_path(output.get_ref(), "encrypted.asc") != RNP_SUCCESS) {
-            fprintf(stdout, "failed to create output object\n");
-            return result;
+        if (rnp_output_to_memory(output.get_ref(), 0) != RNP_SUCCESS) {
+            std::cout << "Failed to create output object" << std::endl;
+            return result_str;
         }
     
-        /* create encryption operation */
         if (rnp_op_encrypt_create(encrypt.get_ref(), ffi.get(), input.get(), output.get()) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to create encrypt operation\n");
-            return result;
+            std::cout << "Failed to create encrypt operation" << std::endl;
+            return result_str;
         }
     
-        /* setup encryption parameters */
         rnp_op_encrypt_set_armor(encrypt.get(), true);
         rnp_op_encrypt_set_file_name(encrypt.get(), "message.txt");
         rnp_op_encrypt_set_file_mtime(encrypt.get(), (uint32_t) time(NULL));
-        //rnp_op_encrypt_set_compression(encrypt.get(), "ZIP", 6);
         rnp_op_encrypt_set_cipher(encrypt.get(), RNP_ALGNAME_AES_256);
         rnp_op_encrypt_set_aead(encrypt.get(), "None");
     
-        /* locate recipient's key and add it to the operation context. While we search by userid
-         * (which is easier), you can search by keyid, fingerprint or grip. */
         if (rnp_locate_key(ffi.get(), "userid", "rsa@key", key.get_ref()) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to locate recipient key rsa@key.\n");
-            return result;
+            std::cout << "Failed to locate recipient key rsa@key" << std::endl;
+            return result_str;
         }
+        std::cout << "Located RSA key for encryption" << std::endl;
     
         if (rnp_op_encrypt_add_recipient(encrypt.get(), key.get()) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to add recipient\n");
-            return result;
+            std::cout << "Failed to add recipient" << std::endl;
+            return result_str;
         }
         key.reset();
     
-        /* add encryption password as well */
-        if (rnp_op_encrypt_add_password(
-              encrypt.get(), "encpassword", RNP_ALGNAME_SHA256, 0, RNP_ALGNAME_AES_256) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to add encryption password\n");
-            return result;
+        if (rnp_op_encrypt_add_password(encrypt.get(), "encpassword", RNP_ALGNAME_SHA256, 0, RNP_ALGNAME_AES_256) != RNP_SUCCESS) {
+            std::cout << "Failed to add encryption password" << std::endl;
+            return result_str;
         }
     
-        /* execute encryption operation */
         if (rnp_op_encrypt_execute(encrypt.get()) != RNP_SUCCESS) {
-            fprintf(stdout, "encryption failed\n");
-            return result;
+            std::cout << "Encryption failed" << std::endl;
+            return result_str;
         }
-    
-        fprintf(stdout, "Encryption succeeded. Encrypted message written to file encrypted.asc\n");
-        result = 0;
-        return result;
+        std::cout << "Encryption operation executed successfully" << std::endl;
+
+        uint8_t* encrypted_buf = nullptr;
+        size_t encrypted_len = 0;
+        
+        if (rnp_output_memory_get_buf(output.get(), &encrypted_buf, &encrypted_len, false) != RNP_SUCCESS) {
+            std::cout << "Failed to get encrypted data" << std::endl;
+            return result_str;
+        }
+        
+        result_str = std::string(reinterpret_cast<char*>(encrypted_buf), encrypted_len);
+        std::cout << "Encrypted data retrieved, length: " << encrypted_len << std::endl;
+        rnp_buffer_destroy(encrypted_buf);
+        
+        return result_str;
     }
 
-
-    static int ffi_decrypt(bool usekeys) {
+    static std::string ffi_decrypt_string(const std::string& encrypted_data, bool usekeys) {
         RNPFFIT ffi;
         RNPInputT keyfile;
         RNPInputT input;
         RNPOutputT output;
-        uint8_t* buf = NULL;
-        size_t buf_len = 0;
-        int result = 1;
+        std::string result_str = "";
     
-        /* initialize FFI object */
+        std::cout << "Starting decryption of message, using keys: " << (usekeys ? "yes" : "no") << std::endl;
+    
         if (rnp_ffi_create(ffi.get_ref(), "GPG", "GPG") != RNP_SUCCESS) {
-            return result;
+            std::cout << "Failed to create FFI" << std::endl;
+            return result_str;
         }
     
-        /* check whether we want to use key or password for decryption */
         if (usekeys) {
-            /* load secret keyring, as it is required for public-key decryption. However, you may
-             * need to load public keyring as well to validate key's signatures. */
             if (rnp_input_from_path(keyfile.get_ref(), "secring.pgp") != RNP_SUCCESS) {
-                fprintf(stdout, "failed to open secring.pgp. Did you run ./generate sample?\n");
-                return result;
+                std::cout << "Failed to open secring.pgp. Did you run key generation?" << std::endl;
+                return result_str;
             }
     
-            /* we may use RNP_LOAD_SAVE_SECRET_KEYS | RNP_LOAD_SAVE_PUBLIC_KEYS as well*/
             if (rnp_load_keys(ffi.get(), "GPG", keyfile.get(), RNP_LOAD_SAVE_SECRET_KEYS) != RNP_SUCCESS) {
-                fprintf(stdout, "failed to read secring.pgp\n");
-                return result;
+                std::cout << "Failed to read secring.pgp" << std::endl;
+                return result_str;
             }
             keyfile.reset();
+            std::cout << "Secret keys loaded successfully" << std::endl;
         }
     
-        /* set the password provider */
         rnp_ffi_set_pass_provider(ffi.get(), example_pass_provider, NULL);
+        std::cout << "Password provider set up" << std::endl;
     
-        /* create file input and memory output objects for the encrypted message and decrypted
-         * message */
-        if (rnp_input_from_path(input.get_ref(), "encrypted.asc") != RNP_SUCCESS) {
-            fprintf(stdout, "failed to create input object\n");
-            return result;
+        if (rnp_input_from_memory(input.get_ref(), 
+                                 reinterpret_cast<const uint8_t*>(encrypted_data.data()), 
+                                 encrypted_data.size(), 
+                                 false) != RNP_SUCCESS) {
+            std::cout << "Failed to create input object" << std::endl;
+            return result_str;
         }
     
         if (rnp_output_to_memory(output.get_ref(), 0) != RNP_SUCCESS) {
-            fprintf(stdout, "failed to create output object\n");
-            return result;
+            std::cout << "Failed to create output object" << std::endl;
+            return result_str;
         }
     
         if (rnp_decrypt(ffi.get(), input.get(), output.get()) != RNP_SUCCESS) {
-            fprintf(stdout, "public-key decryption failed\n");
-            return result;
+            std::cout << "Decryption failed" << std::endl;
+            return result_str;
         }
+        std::cout << "Decryption operation executed successfully" << std::endl;
     
-        /* get the decrypted message from the output structure */
-        if (rnp_output_memory_get_buf(output.get(), &buf, &buf_len, false) != RNP_SUCCESS) {
-            return result;
+        uint8_t* decrypted_buf = nullptr;
+        size_t decrypted_len = 0;
+        
+        if (rnp_output_memory_get_buf(output.get(), &decrypted_buf, &decrypted_len, false) != RNP_SUCCESS) {
+            std::cout << "Failed to get decrypted data" << std::endl;
+            return result_str;
         }
-        fprintf(stdout,
-                "Decrypted message (%s):\n%.*s\n",
-                usekeys ? "with key" : "with password",
-                (int) buf_len,
-                buf);
-    
-        result = 0;
-        return result;
+        
+        result_str = std::string(reinterpret_cast<char*>(decrypted_buf), decrypted_len);
+        std::cout << "Decrypted data retrieved, length: " << decrypted_len << std::endl;
+        rnp_buffer_destroy(decrypted_buf);
+        
+        return result_str;
     }
-
   };
 };
