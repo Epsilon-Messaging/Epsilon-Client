@@ -197,17 +197,12 @@ namespace rnp {
                           char             buf[],
                           size_t           buf_len)
     {
-        if (strcmp(pgp_context, "decrypt")) {
+        if (strcmp(pgp_context, "decrypt") == 0 || strcmp(pgp_context, "protect") == 0) {
             strncpy(buf, "encpassword", buf_len);
             return true;
         }
-        if (strcmp(pgp_context, "protect")) {
-            return false;
-        }
-    
         return false;
     }
-
     public:
     static int ffi_generate_keys() {
         RNPOutputT keyfile;
